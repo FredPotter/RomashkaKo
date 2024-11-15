@@ -37,8 +37,13 @@ public class ProductRestController {
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortOrder) {
 
-        List<ProductDTO> products = productService.getFilteredAndSortedProducts(name, minPrice, maxPrice, available, limit, sortBy, sortOrder);
-        return ResponseEntity.ok(products);
+        List<Product> products = productService.getFilteredAndSortedProducts(name, minPrice, maxPrice, available, limit, sortBy, sortOrder);
+
+        List<ProductDTO> productDTOs = products.stream()
+                .map(product -> objectMapper.convertValue(product, ProductDTO.class))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(productDTOs);
     }
 
     @GetMapping("/{id}")

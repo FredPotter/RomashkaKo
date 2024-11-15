@@ -24,15 +24,12 @@ public class ProductService {
         return productRepository.findAll();
     }
 
-    public List<ProductDTO> getFilteredAndSortedProducts(String name, Long minPrice, Long maxPrice, Boolean available, int limit, String sortBy, String sortOrder) {
+    public List<Product> getFilteredAndSortedProducts(String name, Long minPrice, Long maxPrice, Boolean available, int limit, String sortBy, String sortOrder) {
         Specification<Product> spec = ProductSpecification.createSpecification(name, minPrice, maxPrice, available);
         Sort sort = Sort.by(sortOrder.equalsIgnoreCase("desc") ? Sort.Order.desc(sortBy) : Sort.Order.asc(sortBy));
         PageRequest pageRequest = PageRequest.of(0, limit, sort);
 
-        List<Product> products = productRepository.findAll(spec, pageRequest).getContent();
-        return products.stream()
-                .map(product -> new ProductDTO(product.getId(), product.getName(), product.getDescription(), product.getPriceKopecks(), product.getAvailable()))
-                .toList();
+        return productRepository.findAll(spec, pageRequest).getContent();
     }
 
     public Product getProductById(Long id) throws NoSuchElementException {
