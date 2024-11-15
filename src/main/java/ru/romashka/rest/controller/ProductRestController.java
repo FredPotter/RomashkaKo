@@ -1,9 +1,10 @@
 package ru.romashka.rest.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.MessageSource;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.ProblemDetail;
 import ru.romashka.model.entity.Product;
+import ru.romashka.rest.dto.ProductDTO;
 import ru.romashka.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,10 +13,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
-
 import java.util.List;
 import java.util.Locale;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -24,37 +23,48 @@ import java.util.stream.Collectors;
 public class ProductRestController {
 
     private final ProductService productService;
-
+    private final ObjectMapper objectMapper;
     private final MessageSource messageSource;
 
     @GetMapping
-    public List<Product> getAllProducts() {
-        return productService.getAllProducts();
+    public List<ProductDTO> getAllProducts() {
+        return productService.getAllProducts().stream()
+                .map(product -> objectMapper.convertValue(product, ProductDTO.class)) // Преобразование сущности в DTO
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public Product getProductById(@PathVariable Long id) {
-        return productService.getProductById(id);
+    public ProductDTO getProductById(@PathVariable Long id) {
+        Product product = productService.getProductById(id);
+        return objectMapper.convertValue(product, ProductDTO.class);
     }
 
     @PostMapping
-    public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product, BindingResult bindingResult) throws BindException {
+    public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody ProductDTO productDTO, BindingResult bindingResult) throws BindException {
         if (bindingResult.hasErrors()) {
             throw new BindException(bindingResult);
         }
+
+        Product product = objectMapper.convertValue(productDTO, Product.class);
         Product createdProduct = productService.createProduct(product);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
+        ProductDTO createdProductDTO = objectMapper.convertValue(createdProduct, ProductDTO.class);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdProductDTO);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id,
-                                                 @Valid @RequestBody Product updatedProduct,
-                                                 BindingResult bindingResult) throws BindException {
+    public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id,
+                                                    @Valid @RequestBody ProductDTO updatedProductDTO,
+                                                    BindingResult bindingResult) throws BindException {
         if (bindingResult.hasErrors()) {
             throw new BindException(bindingResult);
         }
+
+        Product updatedProduct = objectMapper.convertValue(updatedProductDTO, Product.class);
         Product product = productService.editProduct(id, updatedProduct);
-        return ResponseEntity.ok(product);
+        ProductDTO updatedProductResponseDTO = objectMapper.convertValue(product, ProductDTO.class);
+
+        return ResponseEntity.ok(updatedProductResponseDTO);
     }
 
     @DeleteMapping("/{id}")
@@ -62,6 +72,7 @@ public class ProductRestController {
         productService.deleteProductById(id);
         return ResponseEntity.noContent().build();
     }
+    
     @ExceptionHandler(BindException.class)
     public ResponseEntity<ProblemDetail> handleBindingException(BindException exception, Locale locale) {
         List<String> errorMessages = exception.getAllErrors().stream()

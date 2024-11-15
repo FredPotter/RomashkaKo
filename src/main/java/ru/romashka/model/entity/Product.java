@@ -1,8 +1,6 @@
 package ru.romashka.model.entity;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,20 +8,24 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
+@Table(name = "products")
 public class Product {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull(message = "Название товара обязательно")
-    @Size(max = 255, message = "Название товара не может превышать 255 символов")
+    @Column(nullable = false, length = 255)
     private String name;
 
-    @Size(max = 4096, message = "Описание товара не может превышать 4096 символов")
+    @Column(length = 4096)
     private String description;
 
-    @Min(value = 0, message = "Цена товара не может быть меньше 0")
+    @Column(nullable = false)
     private Long priceKopecks = 0L;
 
+    @Column(nullable = false)
     private Boolean available = Boolean.FALSE;
 
     public Product(String name, String description, Long priceKopecks) {
