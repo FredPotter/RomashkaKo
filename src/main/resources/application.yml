@@ -1,0 +1,13 @@
+server:
+  port: 8080
+spring:
+  mvc:
+    problemdetails:
+      enabled: true
+  datasource:
+    url: jdbc:postgresql://localhost:5433/db
+    username: postgres
+    password: lolushka1993
+  jpa:
+    hibernate.ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
