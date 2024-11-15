@@ -1,6 +1,7 @@
 package ru.romashka.rest.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.constraints.Min;
 import org.springframework.context.MessageSource;
 import org.springframework.http.ProblemDetail;
 import ru.romashka.model.entity.Product;
@@ -27,10 +28,17 @@ public class ProductRestController {
     private final MessageSource messageSource;
 
     @GetMapping
-    public List<ProductDTO> getAllProducts() {
-        return productService.getAllProducts().stream()
-                .map(product -> objectMapper.convertValue(product, ProductDTO.class)) // Преобразование сущности в DTO
-                .collect(Collectors.toList());
+    public ResponseEntity<List<ProductDTO>> getAllProducts(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Long minPrice,
+            @RequestParam(required = false) Long maxPrice,
+            @RequestParam(required = false) Boolean available,
+            @RequestParam(defaultValue = "1") @Min(1) int limit,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortOrder) {
+
+        List<ProductDTO> products = productService.getFilteredAndSortedProducts(name, minPrice, maxPrice, available, limit, sortBy, sortOrder);
+        return ResponseEntity.ok(products);
     }
 
     @GetMapping("/{id}")
@@ -72,7 +80,7 @@ public class ProductRestController {
         productService.deleteProductById(id);
         return ResponseEntity.noContent().build();
     }
-    
+
     @ExceptionHandler(BindException.class)
     public ResponseEntity<ProblemDetail> handleBindingException(BindException exception, Locale locale) {
         List<String> errorMessages = exception.getAllErrors().stream()
